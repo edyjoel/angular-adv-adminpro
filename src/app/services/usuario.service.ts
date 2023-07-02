@@ -6,6 +6,7 @@ import { LoginForm } from '../interfaces/login-form.interface';
 import { Observable, catchError, map, of, pipe, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { Usuario } from '../models/usuario.model';
+import { CargarUsuario } from '../interfaces/cargar-usuarios.interface';
 
 declare const google: any;
 
@@ -29,6 +30,12 @@ export class UsuarioService {
     return this.usuario.uid || '';
   }
 
+  get headers() {
+    return {
+      headers: { 'x-token': this.token },
+    };
+  }
+
   public usuario: Usuario = {
     nombre: '',
     email: '',
@@ -37,6 +44,10 @@ export class UsuarioService {
 
   logout() {
     localStorage.removeItem('token');
+
+    if (!this.usuario.google) {
+      return;
+    }
 
     google.accounts.id.revoke('edyxicon@gmail.com', () => {
       this.ngZone.run(() => {
@@ -52,9 +63,9 @@ export class UsuarioService {
       })
       .pipe(
         map((resp: any) => {
-          const { email, nombre, img = '', google } = resp.usuario;
+          const { email, nombre, img = '', google, role, uid } = resp.usuario;
 
-          this.usuario = new Usuario('', google, nombre, email, img);
+          this.usuario = new Usuario(role, google, nombre, email, img, uid);
 
           localStorage.setItem('token', resp.token);
 
@@ -82,9 +93,11 @@ export class UsuarioService {
       role: this.usuario.role,
     };
 
-    return this.http.put(`${base_url}/usuarios/${this.uid}`, data, {
-      headers: { 'x-token': this.token },
-    });
+    return this.http.put(
+      `${base_url}/usuarios/${this.uid}`,
+      data,
+      this.headers
+    );
   }
 
   login(formData: LoginForm) {
@@ -98,8 +111,48 @@ export class UsuarioService {
   loginGoogle(token: string) {
     return this.http.post(`${base_url}/login/google`, { token }).pipe(
       tap((resp: any) => {
+        console.log(resp);
         localStorage.setItem('token', resp.token);
       })
+    );
+  }
+
+  cargarUsuarios(desde: number = 0) {
+    const url = `${base_url}/usuarios?desde=${desde}`;
+
+    return this.http.get<CargarUsuario>(url, this.headers).pipe(
+      map((resp) => {
+        const usuarios = resp.usuarios.map(
+          (user) =>
+            new Usuario(
+              user.role,
+              user.google,
+              user.nombre,
+              user.email,
+              user.img,
+              user.uid
+            )
+        );
+
+        return {
+          total: resp.total,
+          usuarios,
+        };
+      })
+    );
+  }
+
+  eliminarUsuario(usuario: Usuario) {
+    const url = `${base_url}/usuarios/${usuario.uid}`;
+
+    return this.http.delete(url, this.headers);
+  }
+
+  guardarUsuario(usuario: Usuario) {
+    return this.http.put(
+      `${base_url}/usuarios/${usuario.uid}`,
+      usuario,
+      this.headers
     );
   }
 }
