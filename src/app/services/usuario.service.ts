@@ -3,7 +3,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { RegisterForm } from '../interfaces/register-form.interface';
 import { environment } from 'src/environments/environment';
 import { LoginForm } from '../interfaces/login-form.interface';
-import { Observable, catchError, map, of, pipe, tap } from 'rxjs';
+import { Observable, catchError, delay, map, of, pipe, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { Usuario } from '../models/usuario.model';
 import { CargarUsuario } from '../interfaces/cargar-usuarios.interface';
@@ -26,6 +26,10 @@ export class UsuarioService {
     return localStorage.getItem('token') || '';
   }
 
+  get role(): 'ADMIN_ROLE' | 'USER_ROLE' {
+    return this.usuario.role!;
+  }
+
   get uid(): string {
     return this.usuario.uid || '';
   }
@@ -42,14 +46,28 @@ export class UsuarioService {
     imagenUrl: '',
   };
 
+  guardarLocalStorage(token: string, menu: any) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('menu', JSON.stringify(menu));
+  }
+
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('menu');
 
     if (!this.usuario.google) {
       return;
     }
 
-    google.accounts.id.revoke('edyxicon@gmail.com', () => {
+    // google.accounts.id.revoke('edyxicon@gmail.com', () => {
+    //   this.ngZone.run(() => {
+    //     this.router.navigateByUrl('/login');
+    //   });
+    // });
+
+    // logout de google
+    google.accounts.id.disableAutoSelect();
+    google.accounts.id.revoke(localStorage.getItem('email'), () => {
       this.ngZone.run(() => {
         this.router.navigateByUrl('/login');
       });
@@ -67,8 +85,6 @@ export class UsuarioService {
 
           this.usuario = new Usuario(role, google, nombre, email, img, uid);
 
-          localStorage.setItem('token', resp.token);
-
           return true;
         }),
         catchError((error) => of(false))
@@ -78,7 +94,7 @@ export class UsuarioService {
   crearUsuario(formData: RegisterForm) {
     return this.http.post(`${base_url}/usuarios`, formData).pipe(
       tap((resp: any) => {
-        localStorage.setItem('token', resp.token);
+        this.guardarLocalStorage(resp.token, resp.menu);
       })
     );
   }
@@ -103,7 +119,7 @@ export class UsuarioService {
   login(formData: LoginForm) {
     return this.http.post(`${base_url}/login`, formData).pipe(
       tap((resp: any) => {
-        localStorage.setItem('token', resp.token);
+        this.guardarLocalStorage(resp.token, resp.menu);
       })
     );
   }
@@ -111,8 +127,7 @@ export class UsuarioService {
   loginGoogle(token: string) {
     return this.http.post(`${base_url}/login/google`, { token }).pipe(
       tap((resp: any) => {
-        console.log(resp);
-        localStorage.setItem('token', resp.token);
+        this.guardarLocalStorage(resp.token, resp.menu);
       })
     );
   }

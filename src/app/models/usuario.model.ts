@@ -4,7 +4,7 @@ const base_url = environment.base_url;
 
 export class Usuario {
   constructor(
-    public role?: string,
+    public role?: 'ADMIN_ROLE' | 'USER_ROLE',
     public google?: boolean,
     public nombre: string = '',
     public email: string = '',
