@@ -41,15 +41,16 @@ export class RegisterComponent {
     }
 
     // Realizar el posteo
-    this.usuarioService.crearUsuario(this.registerForm.value).subscribe(
-      (resp) => {
-        console.log('Usuario creado');
-        this.router.navigateByUrl('/');
-      },
-      (err) => {
-        Swal.fire('Error', err.error.msg, 'error');
-      }
-    );
+    this.usuarioService
+      .crearUsuario(this.registerForm.value)
+      .subscribe((resp) => {
+        if (resp.ok === true) {
+          console.log('Usuario creado');
+          this.router.navigateByUrl('/');
+        } else {
+          Swal.fire('Error', resp, 'error');
+        }
+      });
   }
 
   campoNoValido(campo: string): boolean {

@@ -41,8 +41,11 @@
         </div>
         <div class="row">
           <div class="col text-danger">
-            <p *ngIf="campoNoValido('nombre')">El nombre es obligatorio.</p>
+            <p *ngIf="campoNoValido('nombre')">El nombre es obligatorio y debe de tener mínimo 3 caracteres.</p>
             <p *ngIf="campoNoValido('email')">El email es obligatorio y tiene que ser válido.</p>
+            <p *ngIf="campoNoValido('password')">La contraseña es obligatoria y debe de tener mínimo 6 caracteres.</p>
+            <p *ngIf="campoNoValido('password2')">La confirmación de la contraseña es obligatoria y debe de tener mínimo
+              6 caracteres.</p>
             <p *ngIf="contrasenasNoValidas()">Las contraseñas deben de ser iguales.</p>
             <p *ngIf="aceptaTerminos()">Debe de aceptar los términos de uso.</p>
           </div>

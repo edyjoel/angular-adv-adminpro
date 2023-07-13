@@ -56,6 +56,7 @@ export class UsuarioService {
     localStorage.removeItem('menu');
 
     if (!this.usuario.google) {
+      this.router.navigateByUrl('/login');
       return;
     }
 
@@ -84,6 +85,8 @@ export class UsuarioService {
           const { email, nombre, img = '', google, role, uid } = resp.usuario;
 
           this.usuario = new Usuario(role, google, nombre, email, img, uid);
+
+          this.guardarLocalStorage(resp.token, resp.menu);
 
           return true;
         }),
